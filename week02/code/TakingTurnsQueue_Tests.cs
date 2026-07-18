@@ -12,8 +12,8 @@ public class TakingTurnsQueueTests
     // Scenario: Create a queue with the following people and turns: Bob (2), Tim (5), Sue (3) and
     // run until the queue is empty
     // Expected Result: Bob, Tim, Sue, Bob, Tim, Sue, Tim, Sue, Tim, Tim
-    // Defect(s) Found: The queue emptied prematurely. People with finite turns were being 
-    // removed 1 turn short of their allotment because turns were decremented before verifying if they had remaining turns.
+    // Defect(s) Found: The underlying PersonQueue incorrectly acted like a LIFO stack because Enqueue used Insert(0). 
+    // Additionally, the finite turns implementation decremented the value early and cut turns short by 1.
     public void TestTakingTurnsQueue_FiniteRepetition()
     {
         var bob = new Person("Bob", 2);
@@ -45,8 +45,7 @@ public class TakingTurnsQueueTests
     // Scenario: Create a queue with the following people and turns: Bob (2), Tim (5), Sue (3)
     // After running 5 times, add George with 3 turns.  Run until the queue is empty.
     // Expected Result: Bob, Tim, Sue, Bob, Tim, Sue, Tim, George, Sue, Tim, George, Tim, George
-    // Defect(s) Found: Same bug as Test 1; players with finite turns were removed from rotation 
-    // early due to an incorrect decrement sequence.
+    // Defect(s) Found: SSame defects as Test 1; incorrect LIFO ordering from PersonQueue and premature turn removal from rotation.
     public void TestTakingTurnsQueue_AddPlayerMidway()
     {
         var bob = new Person("Bob", 2);
@@ -88,8 +87,8 @@ public class TakingTurnsQueueTests
     // Scenario: Create a queue with the following people and turns: Bob (2), Tim (Forever), Sue (3)
     // Run 10 times.
     // Expected Result: Bob, Tim, Sue, Bob, Tim, Sue, Tim, Sue, Tim, Tim
-    // Defect(s) Found: Tim (turns = 0) was removed on his very first turn because the logic 
-    // did not process 0 or negative values as infinite remaining turns.
+    // Defect(s) Found: In addition to the LIFO behavior, Tim (turns = 0) was entirely dropped from 
+    // the collection after his first action because the conditional logic didn't account for zero or lower values representing infinite turns.
     public void TestTakingTurnsQueue_ForeverZero()
     {
         var timTurns = 0;
@@ -120,8 +119,8 @@ public class TakingTurnsQueueTests
     // Scenario: Create a queue with the following people and turns: Tim (Forever), Sue (3)
     // Run 10 times.
     // Expected Result: Tim, Sue, Tim, Sue, Tim, Sue, Tim, Tim, Tim, Tim
-    // Defect(s) Found: Tim (turns = -3) was treated identically to the 0 case and dropped instantly 
-    // instead of staying in rotation infinitely.
+    // Defect(s) Found: Similar to the zero value bug, negative turn designations caused the 
+    // persistent items to be dropped instantly on their first turn iteration.
     public void TestTakingTurnsQueue_ForeverNegative()
     {
         var timTurns = -3;
@@ -148,7 +147,7 @@ public class TakingTurnsQueueTests
     [TestMethod]
     // Scenario: Try to get the next person from an empty queue
     // Expected Result: Exception should be thrown with appropriate error message.
-    // Defect(s) Found: None. The empty verification logic was correctly structured.
+    // Defect(s) Found: None. The empty verification block successfully intercepted the execution path.
     public void TestTakingTurnsQueue_Empty()
     {
         var players = new TakingTurnsQueue();
